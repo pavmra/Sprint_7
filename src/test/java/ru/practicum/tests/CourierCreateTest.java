@@ -6,6 +6,7 @@ import org.junit.Before;
 import org.junit.Test;
 import ru.practicum.models.Courier;
 import ru.practicum.steps.CourierSteps;
+import static org.apache.http.HttpStatus.*;
 
 import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.is;
@@ -31,7 +32,7 @@ public class CourierCreateTest extends BaseTest {
     public  void shouldCreateCourierTest(){
 
                 couriersSteps.createCourier(courier)
-                .statusCode(201)
+                .statusCode(SC_CREATED)
                 .body("ok", is(true));
                 lastCreatedCourier = courier;
     }
@@ -40,11 +41,11 @@ public class CourierCreateTest extends BaseTest {
     @Test        //Баг!!!
     public  void shouldNotCreateTwinsCourierTest(){
             couriersSteps.createCourier(courier)
-                .statusCode(201)
+                .statusCode(SC_CREATED)
                 .body("ok", is(true));
             lastCreatedCourier = courier;
             couriersSteps.createCourier(courier)
-                .statusCode(409)
+                .statusCode(SC_CONFLICT)
                 .body("message", equalTo("Этот логин уже используется"));
     }
 
@@ -55,7 +56,7 @@ public class CourierCreateTest extends BaseTest {
                 .withPassword("password123")
                 .withFirstName("name");
         couriersSteps.createCourier(courierWithoutLogin)
-                .statusCode(400)
+                .statusCode(SC_BAD_REQUEST)
                 .body("message", equalTo("Недостаточно данных для создания учетной записи"));
     }
 
@@ -66,7 +67,7 @@ public class CourierCreateTest extends BaseTest {
         courierWithoutPassword.withLogin("login" + RandomStringUtils.randomAlphabetic(5));
         courierWithoutPassword.withFirstName("name");
         couriersSteps.createCourier(courierWithoutPassword)
-                .statusCode(400)
+                .statusCode(SC_BAD_REQUEST)
                 .body("message", equalTo("Недостаточно данных для создания учетной записи"));
     }
 
@@ -77,7 +78,7 @@ public class CourierCreateTest extends BaseTest {
         courierWithoutFirstName.withLogin("login" + RandomStringUtils.randomAlphabetic(5));
         courierWithoutFirstName.withPassword("password123");
         couriersSteps.createCourier(courierWithoutFirstName)
-                .statusCode(201)
+                .statusCode(SC_CREATED)
                 .body("ok", is(true));
         lastCreatedCourier = courierWithoutFirstName;
     }
@@ -90,11 +91,11 @@ public class CourierCreateTest extends BaseTest {
                     lastCreatedCourier.getLogin() != null &&
                     lastCreatedCourier.getPassword() != null) {
                 Integer id = couriersSteps.login(lastCreatedCourier)
-                        .statusCode(200)
+                        .statusCode(SC_OK)
                         .extract().body().path("id");
                 if (id != null) {
                     couriersSteps.delete(lastCreatedCourier.withId(id))
-                            .statusCode(200);
+                            .statusCode(SC_OK);
                 }
             }
         } catch (Exception e) {
