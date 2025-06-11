@@ -20,18 +20,21 @@ public class CourierLoginTests extends BaseTest {
     @Before
     public void setUp() {
         courierSteps = new CourierSteps();
-        courier = new Courier()
+                courier = new Courier()
                 .withLogin(RandomStringUtils.randomAlphabetic(10))
                 .withPassword(RandomStringUtils.randomAlphabetic(10))
                 .withFirstName(RandomStringUtils.randomAlphabetic(10));
+        courierSteps.createCourier(courier)
+                .statusCode(201);
+        courierId = courierSteps.login(courier)
+                .statusCode(200)
+                .extract().path("id");
     }
 
 
     @Test
     public void shouldLoginCourierTest() {
-        courierSteps.createCourier(courier)
-                .statusCode(201);
-        courierId = courierSteps.login(courier)
+                courierId = courierSteps.login(courier)
                 .statusCode(200)
                 .extract().path("id");
         assertNotNull("ID курьера не должен быть null", courierId);
@@ -40,7 +43,11 @@ public class CourierLoginTests extends BaseTest {
 
     @Test
     public void shouldNotLoginWithWrongDataTest() {
-        courierSteps.login(courier)
+        Courier wrongCourier = new Courier()
+                .withLogin("nonexistent_login")
+                .withPassword("nonexistent_password");
+
+        courierSteps.login(wrongCourier)
                 .statusCode(404)
                 .body("message", equalTo("Учетная запись не найдена"));
     }
@@ -48,9 +55,7 @@ public class CourierLoginTests extends BaseTest {
 
     @Test
     public void shouldNotLoginWithWrongPasswordTest() {
-        courierSteps.createCourier(courier).statusCode(201);
-
-        Courier wrongPasswordCourier = new Courier()
+                Courier wrongPasswordCourier = new Courier()
                 .withLogin(courier.getLogin())
                 .withPassword("wrong_password");
         courierSteps.login(wrongPasswordCourier)
@@ -72,7 +77,6 @@ public class CourierLoginTests extends BaseTest {
 
     @Test         //Баг!!!
     public void shouldNotLoginWithoutPasswordPoleTest() {
-        courierSteps.createCourier(courier).statusCode(201);
         courierId = courierSteps.login(courier)
                 .statusCode(200)
                 .extract().path("id");
@@ -86,8 +90,6 @@ public class CourierLoginTests extends BaseTest {
 
     @Test
     public void goodLoginReturnsIdTest() {
-        courierSteps.createCourier(courier)
-                .statusCode(201);
         courierId = courierSteps.login(courier)
                 .statusCode(200)
                 .body("id", Matchers.notNullValue())
